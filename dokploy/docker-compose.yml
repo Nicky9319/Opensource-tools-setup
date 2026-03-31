@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: dokploy-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: dokploy
+      POSTGRES_USER: dokploy
+      POSTGRES_PASSWORD: dokploy
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    networks:
+      - dokploy-network
+
+  dokploy:
+    image: dokploy/dokploy:latest
+    container_name: dokploy
+    restart: unless-stopped
+
+    depends_on:
+      - postgres
+
+    ports:
+      - "3000:3000"
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - dokploy_data:/app/data
+
+    environment:
+      DATABASE_URL: postgres://dokploy:dokploy@postgres:5432/dokploy
+      NODE_ENV: production
+
+    networks:
+      - dokploy-network
+
+volumes:
+  postgres_data:
+  dokploy_data:
+
+networks:
+  dokploy-network:
+    driver: bridge
