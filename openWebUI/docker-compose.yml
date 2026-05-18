@@ -1,0 +1,31 @@
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+
+    ports:
+      - "3000:8080"
+
+    environment:
+      # REQUIRED for MCP OAuth persistence
+      - WEBUI_SECRET_KEY=abcdefghijklmnopqrstuvwxyz
+
+      # Authentication
+      - WEBUI_AUTH=True
+      - ENABLE_SIGNUP=True
+      - DEFAULT_USER_ROLE=user
+
+      # Optional quality-of-life settings
+      - ENABLE_COMMUNITY_SHARING=False
+      - ENABLE_MESSAGE_RATING=False
+
+    volumes:
+      - open-webui:/app/backend/data
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    restart: unless-stopped
+
+volumes:
+  open-webui:
