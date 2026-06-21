@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: redash-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: redash
+      POSTGRES_PASSWORD: redash
+      POSTGRES_DB: redash
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: redash-redis
+    restart: unless-stopped
+
+  server:
+    image: redash/redash:latest
+    container_name: redash-server
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "5000:5000"
+    environment:
+      PYTHONUNBUFFERED: "0"
+      REDASH_LOG_LEVEL: "INFO"
+      REDASH_REDIS_URL: "redis://redis:6379/0"
+      REDASH_DATABASE_URL: "postgresql://redash:redash@postgres:5432/redash"
+      REDASH_COOKIE_SECRET: "change-this-to-random-64-char-string"
+      REDASH_SECRET_KEY: "change-this-to-random-64-char-string"
+    command: server
+
+  worker:
+    image: redash/redash:latest
+    container_name: redash-worker
+    restart: unless-stopped
+    depends_on:
+      - server
+    environment:
+      PYTHONUNBUFFERED: "0"
+      REDASH_LOG_LEVEL: "INFO"
+      REDASH_REDIS_URL: "redis://redis:6379/0"
+      REDASH_DATABASE_URL: "postgresql://redash:redash@postgres:5432/redash"
+      REDASH_COOKIE_SECRET: "change-this-to-random-64-char-string"
+      REDASH_SECRET_KEY: "change-this-to-random-64-char-string"
+    command: worker
+
+  scheduler:
+    image: redash/redash:latest
+    container_name: redash-scheduler
+    restart: unless-stopped
+    depends_on:
+      - server
+    environment:
+      PYTHONUNBUFFERED: "0"
+      REDASH_LOG_LEVEL: "INFO"
+      REDASH_REDIS_URL: "redis://redis:6379/0"
+      REDASH_DATABASE_URL: "postgresql://redash:redash@postgres:5432/redash"
+      REDASH_COOKIE_SECRET: "change-this-to-random-64-char-string"
+      REDASH_SECRET_KEY: "change-this-to-random-64-char-string"
+    command: scheduler
+
+volumes:
+  postgres_data:
