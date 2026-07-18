@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  flipt:
+    image: flipt/flipt:latest
+    container_name: flipt
+    restart: always
+    ports:
+      - "8080:8080" # UI and REST API
+      - "9000:9000" # gRPC API (Faster)
+    environment:
+      # Tell Flipt to use Postgres instead of default SQLite
+      FLIPT_DB_URL: postgres://flipt_user:secret_password@db:5432/flipt?sslmode=disable
+      FLIPT_LOG_LEVEL: info
+      # Optional: Set base URL if behind reverse proxy
+      # FLIPT_SERVER_HTTP_URL: https://yourdomain.com
+    depends_on:
+      - db
+    networks:
+      - flipt-net
+
+  db:
+    image: postgres:15-alpine
+    container_name: flipt-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: flipt_user
+      POSTGRES_PASSWORD: secret_password
+      POSTGRES_DB: flipt
+    volumes:
+      - flipt_db_data:/var/lib/postgresql/data
+    networks:
+      - flipt-net
+
+volumes:
+  flipt_db_data:
+
+networks:
+  flipt-net:
